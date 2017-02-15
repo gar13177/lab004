@@ -64,6 +64,7 @@ public class MailSession {
 			}
 		}else{
 			return SendResponse(551);//no se encuentra este dominio
+			
 		}
 		
 		if ( this.toAddress == null ) this.toAddress = new HashSet<ClientMailAddress>();
