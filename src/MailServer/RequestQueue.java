@@ -1,3 +1,4 @@
+package MailServer;
 import java.net.Socket;
 import java.util.ArrayList;
 
