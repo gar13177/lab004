@@ -9,8 +9,8 @@ public class TCPClientAPP {
             Socket socket = null;
             DataInputStream in = null;
             DataOutputStream out = null;
-            String hostName = "186.151.48.9";
-            int serverSocket = 2407;
+            String hostName = "localhost";
+            int serverSocket = 25;
 
         try {
             socket = new Socket(hostName, serverSocket);

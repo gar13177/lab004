@@ -9,7 +9,7 @@ public class WebServer {
 	public WebServer(RequestQueue queue){
 		this._queue = queue;
 		
-		int port = 2407;
+		int port = 25;
         ServerSocket socket = null;
 
         try {

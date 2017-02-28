@@ -120,7 +120,7 @@ public class MailSession {
 			return SendResponse(354);
 		}
 		
-		if ( buf.contains("\r\n.\r\n") ){
+		if ( buf.contains("finaldelmensaje..") ){//"\r\n.\r\n"
 			System.out.println("Fin de mensaje");
 			this.status = 32;//final de data
 			writer.close();
