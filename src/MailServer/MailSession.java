@@ -7,6 +7,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 public class MailSession {
 
@@ -120,12 +121,13 @@ public class MailSession {
 			return SendResponse(354);
 		}
 		
-		if ( buf.contains("finaldelmensaje..") ){//"\r\n.\r\n"
+		boolean next = false;
+		String endStr = "\r\n.\r\n";
+		if ( buf.endsWith(endStr)){//"\r\n.\r\n"
 			System.out.println("Fin de mensaje");
+			buf = buf.replace(endStr,"");
+			next = true;
 			this.status = 32;//final de data
-			writer.close();
-			writer = null;
-			return ProcessDATAEnd();
 		}
 		
 		if ( writer == null )
@@ -136,6 +138,11 @@ public class MailSession {
 				e.printStackTrace();
 			}
 		if ( writer != null ) writer.println(buf);
+		if (next){
+			writer.close();
+			writer = null;
+			return ProcessDATAEnd();
+		}
 		
 		return 220;//O return 250??
 		
@@ -148,12 +155,12 @@ public class MailSession {
 	
 	public int ProcessCMD ( String buf, int len ){
 		if ( this.status == 16 ) return ProcessDATA( buf, len );
-		else if ( buf.substring(0, 4).toUpperCase().equals("HELO")) return ProcessHELO( buf, len );
-		else if ( buf.substring(0, 4).toUpperCase().equals("EHLO")) return ProcessHELO( buf, len );
-		else if ( buf.substring(0, 4).toUpperCase().equals("MAIL")) return ProcessMAIL( buf, len );
-		else if ( buf.substring(0, 4).toUpperCase().equals("RCPT")) return ProcessRCPT( buf, len );
-		else if ( buf.substring(0, 4).toUpperCase().equals("DATA")) return ProcessDATA( buf, len );
-		else if ( buf.substring(0, 4).toUpperCase().equals("QUIT")) return ProcessQUIT( buf, len );
+		else if ( buf.toUpperCase().replaceAll(" ","").startsWith("HELO") ) return ProcessHELO( buf, len );
+		else if ( buf.toUpperCase().replaceAll(" ","").startsWith("EHLO") ) return ProcessHELO( buf, len );
+		else if ( buf.toUpperCase().replaceAll(" ","").startsWith("MAILFROM") ) return ProcessMAIL( buf, len );
+		else if ( buf.toUpperCase().replaceAll(" ","").startsWith("RCPT") ) return ProcessRCPT( buf, len );
+		else if ( buf.toUpperCase().replaceAll(" ","").startsWith("DATA") ) return ProcessDATA( buf, len );
+		else if ( buf.toUpperCase().replaceAll(" ","").startsWith("QUIT") ) return ProcessQUIT( buf, len );
 		else return ProcessNotImplemented(false);
 	}
 	
