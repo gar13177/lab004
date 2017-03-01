@@ -67,6 +67,13 @@ public class Worker implements Runnable{
 	        	out.writeInt(outputArray.length);
 	        	out.write(outputArray);
 	        	System.out.println("Enviado: "+ outputLine);
+	        	if (session.getStatus() == 4) {	        		
+	        		outputLine = "findelmensaje..";
+		        	outputArray = outputLine.getBytes();
+		        	out.writeInt(outputArray.length);
+		        	out.write(outputArray);
+		        	session.setStatus(5);
+	        	}
 	    }
         
         try {

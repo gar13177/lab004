@@ -60,13 +60,10 @@ public class MailSession {
 
 	public int ProcessServer ( String buf, int len ){
 		if ( buf.contains("250 OK") && status == 1 ) return ProcessHELO( buf, len );
-		else if (buf.contains("250 OK") && status == 2){
-			System.out.println("Sii RCPT");
-			return ProcessMAIL( buf, len );
-		} 
-		else if ( status == 3 && buf.contains("250 OK") ) return ProcessRCPT( buf, len );
-		else if ( buf.contains("354 Start mail input; end width <CRLF>.<CRLF>")) return ProcessDATA( buf, len );
-		else if ( buf.contains("250 OK") && status == 4) return ProcessQUIT( buf, len );
+		else if (buf.contains("250 OK") && status == 2) return ProcessMAIL( buf, len );
+		else if ( status == 3 && buf.contains("250") ) return ProcessRCPT( buf, len );
+		else if ( buf.contains("354")) return ProcessDATA( buf, len );
+		else if ( buf.contains("250") && status == 5) return ProcessQUIT( buf, len );
 		else return ProcessNotImplemented(false);
 	}
 	
@@ -83,6 +80,7 @@ public class MailSession {
 			case 250:
 				if(rcptCount>newEmail.destinatarios.size()-1 && status == 3){
 					msg = "DATA";
+					status=3;
 					break;
 				}
 				String rcp = newEmail.destinatarios.get(rcptCount);
@@ -91,7 +89,7 @@ public class MailSession {
 				msg = rcpt;
 				break;
 			case 354:
-				msg = newEmail.mensaje + "finaldelmensaje..";
+				msg = newEmail.mensaje;
 				break;
 			case 501:
 				msg = "501 Syntax error in parameters or arguments\r\n";
