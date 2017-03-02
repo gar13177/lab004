@@ -1,5 +1,6 @@
 package MailServer;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -7,7 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.UUID;
-import java.util.regex.Pattern;
+import UserAgent.MailSender;
 
 public class MailSession {
 
@@ -24,6 +25,7 @@ public class MailSession {
 	private int rcptCount;
 	private ClientMailAddress fromAddress;
 	private HashSet<ClientMailAddress> toAddress;
+	private HashSet<ClientMailAddress> otherDomain;
 	
 	
 	public MailSession( ){
@@ -58,6 +60,7 @@ public class MailSession {
 		System.out.println (String.format("RCPT [%s] User: [%s] Domain: [%s]",rcpt.getAddress(), rcpt.getUser(), rcpt.getDomain()));
 		
 		File f = new File("server/"+rcpt.getDomain().toLowerCase());
+		
 		if ( f.isDirectory() ){
 			f = new File("server/"+rcpt.getDomain().toLowerCase()+"/"+rcpt.getUser().toLowerCase());
 			if ( !f.isDirectory() ){
@@ -65,8 +68,9 @@ public class MailSession {
 				return SendResponse(550);//responder 550
 			}
 		}else{
-			return SendResponse(551);//no se encuentra este dominio
-			
+			if ( this.otherDomain == null ) this.otherDomain = new HashSet<ClientMailAddress>();
+			this.otherDomain.add(rcpt);
+			return SendResponse(250);//no se encuentra este dominio, en teoria lo voy a buscar
 		}
 		
 		if ( this.toAddress == null ) this.toAddress = new HashSet<ClientMailAddress>();
@@ -122,7 +126,7 @@ public class MailSession {
 		}
 		
 		boolean next = false;
-		String endStr = "\r\n.\r\n";
+		String endStr = "\\r\\n.\\r\\n";
 		if ( buf.endsWith(endStr)){//"\r\n.\r\n"
 			System.out.println("Fin de mensaje");
 			buf = buf.replace(endStr,"");
@@ -213,20 +217,46 @@ public class MailSession {
 		File f;
 		String name;		
 		
-		for ( ClientMailAddress c: this.toAddress ){
-			System.out.println("Sending to "+c.getAddress()+" "+c.getPath());
-			 
-			name = c.getPath()+"/"+UUID.randomUUID().toString()+".eml";		
-			
-			while ( (f = new File(name)).exists() )
-				name = c.getPath()+"/"+UUID.randomUUID().toString()+".eml";
-			
-			try {
-				Files.copy(file.toPath(), f.toPath());
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				System.out.println("error: ");e.printStackTrace();
+		if (this.toAddress != null )
+			for ( ClientMailAddress c: this.toAddress ){
+				System.out.println("Sending to "+c.getAddress()+" "+c.getPath());
+				 
+				name = c.getPath()+"/"+UUID.randomUUID().toString()+".eml";		
+				
+				while ( (f = new File(name)).exists() )
+					name = c.getPath()+"/"+UUID.randomUUID().toString()+".eml";
+				
+				try {
+					Files.copy(file.toPath(), f.toPath());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					System.out.println("error: ");e.printStackTrace();
+				}
+				
 			}
+		
+		if (otherDomain != null){//en teoria existen correos en otros dominios
+			FileInputStream fis;
+			byte[] data = new byte[(int) file.length()];
+			try {
+				fis = new FileInputStream(file);
+				fis.read(data);
+				fis.close();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			String str = "";
+			try {
+				str = new String(data, "UTF-8");
+			} catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			MailSender ms = new MailSender(this.fromAddress, this.otherDomain, str);
+			Thread thread = new Thread(ms);
+            thread.start();
 			
 		}
 		

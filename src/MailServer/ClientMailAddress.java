@@ -55,7 +55,7 @@ public class ClientMailAddress {
 	
 	
 	public static boolean AddressValid( String address ){
-		return ( address.length() > 2 && address.contains("@"));
+		return ( address.length() > 2 && address.contains("@") && !address.contains(" "));
 	}
 
 }
